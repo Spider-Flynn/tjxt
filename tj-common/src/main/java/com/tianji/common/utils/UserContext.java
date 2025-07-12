@@ -7,7 +7,7 @@ public class UserContext {
      * 保存用户信息
      * @param userId 用户id
      */
-    public static void setUser(Long userId){
+    public static void setUser(Long userId) {
         TL.set(userId);
     }
 
@@ -15,14 +15,14 @@ public class UserContext {
      * 获取用户
      * @return 用户id
      */
-    public static Long getUser(){
+    public static Long getUser() {
         return TL.get();
     }
 
     /**
      * 移除用户信息
      */
-    public static void removeUser(){
+    public static void removeUser() {
         TL.remove();
     }
 }

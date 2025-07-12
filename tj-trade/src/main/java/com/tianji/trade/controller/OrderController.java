@@ -22,7 +22,6 @@ import java.util.List;
  * <p>
  * 订单 前端控制器
  * </p>
- *
  * @author 虎哥
  * @since 2022-08-29
  */
@@ -36,13 +35,13 @@ public class OrderController {
 
     @ApiOperation("分页查询我的订单")
     @GetMapping("page")
-    public PageDTO<OrderPageVO> queryMyOrderPage(OrderPageQuery pageQuery){
+    public PageDTO<OrderPageVO> queryMyOrderPage(OrderPageQuery pageQuery) {
         return orderService.queryMyOrderPage(pageQuery);
     }
 
     @ApiOperation("根据id查询订单详细信息")
     @GetMapping("/{id}")
-    public OrderVO queryOrderById(@ApiParam ("订单id")@PathVariable("id") Long id){
+    public OrderVO queryOrderById(@ApiParam("订单id") @PathVariable("id") Long id) {
         return orderService.queryOrderById(id);
     }
 
@@ -54,7 +53,7 @@ public class OrderController {
 
     @ApiOperation("预下单接口，生成订单id，确认订单可用优惠券信息")
     @GetMapping("prePlaceOrder")
-    public OrderConfirmVO prePlaceOrder(@RequestParam("courseIds")List<Long> courseIds) {
+    public OrderConfirmVO prePlaceOrder(@RequestParam("courseIds") List<Long> courseIds) {
         return orderService.prePlaceOrder(courseIds);
     }
 
@@ -72,7 +71,7 @@ public class OrderController {
 
     @ApiOperation("取消订单接口")
     @PutMapping("/{id}/cancel")
-    public void cancelOrder(@ApiParam("要取消订单的id") @PathVariable("id") Long orderId){
+    public void cancelOrder(@ApiParam("要取消订单的id") @PathVariable("id") Long orderId) {
         orderService.cancelOrder(orderId);
     }
 

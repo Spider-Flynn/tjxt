@@ -48,7 +48,6 @@ import static com.tianji.trade.constants.TradeErrorInfo.ORDER_NOT_EXISTS;
  * <p>
  * 订单 服务实现类
  * </p>
- *
  * @author 虎哥
  * @since 2022-08-29
  */
@@ -71,8 +70,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 2.封装订单信息
         Order order = new Order();
         // 2.1.计算订单金额
-        Integer totalAmount = courseInfos.stream()
-                .map(CourseSimpleInfoDTO::getPrice).reduce(Integer::sum).orElse(0);
+        Integer totalAmount = courseInfos.stream().map(CourseSimpleInfoDTO::getPrice).reduce(Integer::sum).orElse(0);
         // TODO 2.2.计算优惠金额
         order.setDiscountAmount(0);
         Integer realAmount = totalAmount - order.getDiscountAmount();
@@ -114,11 +112,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 2.判断状态
         for (CourseSimpleInfoDTO courseInfo : courseInfos) {
             // 2.1.检查课程是否上架
-            if(!CourseStatus.SHELF.equalsValue(courseInfo.getStatus())){
+            if (!CourseStatus.SHELF.equalsValue(courseInfo.getStatus())) {
                 throw new BizIllegalException(TradeErrorInfo.COURSE_NOT_FOR_SALE);
             }
             // 2.2.检查课程是否过期
-            if(courseInfo.getPurchaseEndTime().isBefore(now)){
+            if (courseInfo.getPurchaseEndTime().isBefore(now)) {
                 throw new BizIllegalException(TradeErrorInfo.COURSE_EXPIRED);
             }
         }
@@ -138,7 +136,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new BizIllegalException(TradeErrorInfo.COURSE_NOT_EXISTS);
         }
         CourseSimpleInfoDTO courseInfo = courseInfos.get(0);
-        if(!courseInfo.getFree()){
+        if (!courseInfo.getFree()) {
             // 非免费课程，直接报错
             throw new BizIllegalException(TradeErrorInfo.COURSE_NOT_FREE);
         }
@@ -163,22 +161,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         saveOrderAndDetails(order, CollUtils.singletonList(detail));
 
         // 5.发送MQ消息，通知报名成功
-        rabbitMqHelper.send(
-                MqConstants.Exchange.ORDER_EXCHANGE,
-                MqConstants.Key.ORDER_PAY_KEY,
-                OrderBasicDTO.builder()
-                        .orderId(orderId)
-                        .userId(userId)
-                        .courseIds(cIds)
-                        .finishTime(order.getFinishTime())
-                        .build()
-        );
+        rabbitMqHelper.send(MqConstants.Exchange.ORDER_EXCHANGE,
+                            MqConstants.Key.ORDER_PAY_KEY,
+                            OrderBasicDTO.builder()
+                                    .orderId(orderId)
+                                    .userId(userId)
+                                    .courseIds(cIds)
+                                    .finishTime(order.getFinishTime())
+                                    .build());
         // 6.返回vo
-        return PlaceOrderResultVO.builder()
-                .orderId(orderId)
-                .payAmount(0)
-                .status(order.getStatus())
-                .build();
+        return PlaceOrderResultVO.builder().orderId(orderId).payAmount(0).status(order.getStatus()).build();
     }
 
     @Override
@@ -228,9 +220,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new DbException(TradeErrorInfo.PLACE_ORDER_FAILED);
         }
         // 4.2.写订单详情
-        if(orderDetails.size() == 1){
+        if (orderDetails.size() == 1) {
             success = detailService.save(orderDetails.get(0));
-        }else {
+        } else {
             success = detailService.saveBatch(orderDetails);
         }
         if (!success) {
@@ -248,17 +240,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new BadRequestException(ORDER_NOT_EXISTS);
         }
         // 2.判断订单状态是否已经取消，幂等判断
-        if(OrderStatus.CLOSED.equalsValue(order.getStatus())){
-           // 订单已经取消，无需重复操作
-           return;
+        if (OrderStatus.CLOSED.equalsValue(order.getStatus())) {
+            // 订单已经取消，无需重复操作
+            return;
         }
         // 3.判断订单是否未支付，只有未支付订单才可以取消
-        if(!OrderStatus.NO_PAY.equalsValue(order.getStatus())){
+        if (!OrderStatus.NO_PAY.equalsValue(order.getStatus())) {
             throw new BizIllegalException(ORDER_ALREADY_FINISH);
         }
         // 4.可以更新订单状态为取消了
-        boolean success = lambdaUpdate()
-                .set(Order::getStatus, OrderStatus.CLOSED.getValue())
+        boolean success = lambdaUpdate().set(Order::getStatus, OrderStatus.CLOSED.getValue())
                 .set(Order::getMessage, "用户取消订单")
                 .set(Order::getCloseTime, LocalDateTime.now())
                 .eq(Order::getStatus, OrderStatus.NO_PAY.getValue())
@@ -281,7 +272,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             return;
         }
         // 3.判断订单所属用户与当前登录用户是否一致
-        if(userId != order.getUserId()){
+        if (!userId.equals(order.getUserId())) {
             // 不一致，说明不是当前用户的订单，结束
             throw new BadRequestException("不能删除他人订单");
         }
@@ -299,10 +290,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         Page<Order> p = pageQuery.toMpPageDefaultSortByCreateTimeDesc();
         // 2.分页查询订单
         Integer status = pageQuery.getStatus();
-        Page<Order> page = lambdaQuery()
-                .eq(status != null, Order::getStatus, status)
-                .eq(Order::getUserId, userId)
-                .page(p);
+        Page<Order> page = lambdaQuery().eq(status != null, Order::getStatus, status).eq(Order::getUserId, userId).page(p);
         // 3.数据判断
         List<Order> records = page.getRecords();
         if (CollUtils.isEmpty(records)) {
@@ -344,8 +332,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 3.2.订单详情
         List<OrderDetailVO> dvs = BeanUtils.copyList(details, OrderDetailVO.class, (d, v) -> v.setCanRefund(
                 // 订单已经支付，且 退款没有在进行中，标记为可退款状态
-                OrderStatus.canRefund(d.getStatus()) && !RefundStatus.inProgress(v.getRefundStatus())
-        ));
+                OrderStatus.canRefund(d.getStatus()) && !RefundStatus.inProgress(v.getRefundStatus())));
         vo.setDetails(dvs);
         // 3.3.订单进度
         vo.setProgressNodes(detailService.packageProgressNodes(order, null));
@@ -361,7 +348,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
         // 2.计算超时时间
         LocalDateTime outTime = null;
-        if(OrderStatus.NO_PAY.equalsValue(order.getStatus())){
+        if (OrderStatus.NO_PAY.equalsValue(order.getStatus())) {
             outTime = order.getCreateTime().plusMinutes(tradeProperties.getPayOrderTTLMinutes());
         }
         // 3.封装结果
@@ -395,14 +382,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 4.查询订单包含的课程信息
         List<Long> cIds = detailService.queryCourseIdsByOrderId(o.getId());
         // 5.发送MQ消息，通知报名成功
-        rabbitMqHelper.send(
-                MqConstants.Exchange.ORDER_EXCHANGE,
-                MqConstants.Key.ORDER_PAY_KEY,
-                OrderBasicDTO.builder()
-                        .orderId(o.getId()).userId(order.getUserId()).courseIds(cIds)
-                        .finishTime(o.getPayTime())
-                        .build()
-        );
+        rabbitMqHelper.send(MqConstants.Exchange.ORDER_EXCHANGE,
+                            MqConstants.Key.ORDER_PAY_KEY,
+                            OrderBasicDTO.builder()
+                                    .orderId(o.getId())
+                                    .userId(order.getUserId())
+                                    .courseIds(cIds)
+                                    .finishTime(o.getPayTime())
+                                    .build());
     }
 
 }

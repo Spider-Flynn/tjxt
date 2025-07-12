@@ -48,7 +48,7 @@ public class R<T> {
         this.requestId = MDC.get(Constant.REQUEST_ID_HEADER);
     }
 
-    public boolean success(){
+    public boolean success() {
         return code == SUCCESS;
     }
 

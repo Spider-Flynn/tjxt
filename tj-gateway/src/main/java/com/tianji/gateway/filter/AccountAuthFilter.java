@@ -18,6 +18,16 @@ import java.util.List;
 import static com.tianji.auth.common.constants.JwtConstants.AUTHORIZATION_HEADER;
 import static com.tianji.auth.common.constants.JwtConstants.USER_HEADER;
 
+/**
+ * 帐户身份验证筛选器
+ * @author zhao
+ * @date 2025/07/12
+ * @Description 对请求进行统一鉴权；
+ * 实现用户身份识别（Token 解析）；
+ * 实现用户信息透传（写入请求头）；
+ * 实现接口级别的权限控制；
+ * 配合全局异常处理器，返回标准化错误响应。
+ */
 @Component
 public class AccountAuthFilter implements GlobalFilter, Ordered {
 
@@ -39,7 +49,7 @@ public class AccountAuthFilter implements GlobalFilter, Ordered {
         String antPath = method + ":" + path;
 
         // 2.判断是否是无需登录的路径
-        if(isExcludePath(antPath)){
+        if (isExcludePath(antPath)) {
             // 直接放行
             return chain.filter(exchange);
         }
@@ -50,10 +60,8 @@ public class AccountAuthFilter implements GlobalFilter, Ordered {
         R<LoginUserDTO> r = authUtil.parseToken(token);
 
         // 4.如果用户是登录状态，尝试更新请求头，传递用户信息
-        if(r.success()){
-            exchange.mutate()
-                    .request(builder -> builder.header(USER_HEADER, r.getData().getUserId().toString()))
-                    .build();
+        if (r.success()) {
+            exchange.mutate().request(builder -> builder.header(USER_HEADER, r.getData().getUserId().toString())).build();
         }
 
         // 5.校验权限
@@ -65,7 +73,7 @@ public class AccountAuthFilter implements GlobalFilter, Ordered {
 
     private boolean isExcludePath(String antPath) {
         for (String pathPattern : authProperties.getExcludePath()) {
-            if(antPathMatcher.match(pathPattern, antPath)){
+            if (antPathMatcher.match(pathPattern, antPath)) {
                 return true;
             }
         }

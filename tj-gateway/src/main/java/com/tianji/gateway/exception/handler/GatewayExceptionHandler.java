@@ -24,6 +24,16 @@ import java.util.List;
 import static com.tianji.common.constants.ErrorInfo.Code.FAILED;
 import static com.tianji.common.constants.ErrorInfo.Msg.SERVER_INTER_ERROR;
 
+/**
+ * 网关异常处理程序
+ * @author zhao
+ * @date 2025/07/12
+ * @Decription 捕获所有经过网关的请求中的异常；
+ * 对不同类型的异常进行分类处理；
+ * 返回标准化的 JSON 错误响应；
+ * 记录异常日志，便于排查问题；
+ * 支持 requestId透传，便于链路追踪，requestId 就用户的一个请求的UUID，是用来做 全链路追踪和日志关联 的关键标识。
+ */
 @Slf4j
 @Component
 public class GatewayExceptionHandler implements ErrorWebExceptionHandler, Ordered {
@@ -67,10 +77,7 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler, Ordere
             r.requestId(requestIds.get(0));
         }
         byte[] resp = JsonUtils.toJsonStr(r).getBytes(StandardCharsets.UTF_8);
-        return response.writeWith(
-                Mono.fromSupplier(
-                        () -> response.bufferFactory().wrap(resp)
-                ));
+        return response.writeWith(Mono.fromSupplier(() -> response.bufferFactory().wrap(resp)));
     }
 
     private void writeLog(ServerWebExchange exchange, Throwable ex) {
@@ -78,8 +85,7 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler, Ordere
         URI uri = request.getURI();
         String host = uri.getHost();
         int port = uri.getPort();
-        log.error("网关路由异常-host:{} ,port:{}，uri:{},  errormessage:",
-                host, port, request.getPath(), ex);
+        log.error("网关路由异常-host:{} ,port:{}，uri:{},  errormessage:", host, port, request.getPath(), ex);
     }
 
     @Override

@@ -45,7 +45,7 @@ public class GatewaySwaggerResourceProvider implements SwaggerResourcesProvider 
         routeLocator.getRoutes()
                 .filter(route -> route.getUri().getHost() != null)
                 .filter(route -> !gatewayName.equals(route.getUri().getHost()))
-                .subscribe( r -> servers.put(r.getUri().getHost(), r.getId()));
+                .subscribe(r -> servers.put(r.getUri().getHost(), r.getId()));
         // 2.创建自定义资源
         servers.forEach((name, path) -> {
             // 创建Swagger 资源
