@@ -96,10 +96,7 @@ public class PayServiceImpl implements IPayService {
     }
 
     private void sendDelayQueryMessage(OrderDelayQueryDTO message) {
-        mqHelper.sendDelayMessage(
-                TRADE_DELAY_EXCHANGE,
-                ORDER_DELAY_KEY,
-                message, Duration.ofMillis(message.removeFirst()));
+        mqHelper.sendDelayMessage(TRADE_DELAY_EXCHANGE, ORDER_DELAY_KEY, message, Duration.ofMillis(message.removeFirst()));
     }
 
     @Override
@@ -119,9 +116,9 @@ public class PayServiceImpl implements IPayService {
         // 3.查询支付状态
         PayResultDTO payResult = payClient.queryPayResult(orderId);
         int status = payResult.getStatus();
-        if(PayResultDTO.SUCCESS != status){
+        if (PayResultDTO.SUCCESS != status) {
             // 3.1.支付中或支付失败，需要重试查询
-            if(message.getDelayMillis().size() == 0){
+            if (message.getDelayMillis().size() == 0) {
                 // 重试次数用尽，结束
                 return;
             }

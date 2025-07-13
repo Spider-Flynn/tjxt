@@ -53,7 +53,6 @@ import static com.tianji.trade.constants.RefundStatus.REJECT;
  * <p>
  * 退款申请 服务实现类
  * </p>
- *
  * @author 虎哥
  * @since 2022-08-29
  */
@@ -95,10 +94,10 @@ public class RefundApplyServiceImpl extends ServiceImpl<RefundApplyMapper, Refun
         }
         // 2.查询订单
         Order order = orderMapper.getById(detail.getOrderId());
-        if(order == null){
+        if (order == null) {
             throw new BadRequestException(TradeErrorInfo.ORDER_NOT_EXISTS);
         }
-        if(!(OrderStatus.PAYED.equalsValue(order.getStatus()) || OrderStatus.REFUNDED.equalsValue(order.getStatus()))){
+        if (!(OrderStatus.PAYED.equalsValue(order.getStatus()) || OrderStatus.REFUNDED.equalsValue(order.getStatus()))) {
             // 订单状态未支付或已经完结，不能退款
             throw new BizIllegalException(TradeErrorInfo.ORDER_CANNOT_REFUND);
         }
@@ -124,13 +123,13 @@ public class RefundApplyServiceImpl extends ServiceImpl<RefundApplyMapper, Refun
 
         // 6.提交退款申请
         RefundApply refundApply = new RefundApply();
-        refundApply.setOrderDetailId(detail.getId()); //订单明细id
-        refundApply.setOrderId(detail.getOrderId()); //订单id
-        refundApply.setUserId(detail.getUserId()); //退款订单所属人
-        refundApply.setRefundAmount(detail.getRealPayAmount()); //退款金额
-        refundApply.setRefundReason(refundFormDTO.getRefundReason()); //退款原因
-        refundApply.setQuestionDesc(refundFormDTO.getQuestionDesc()); //退款问题说明
-        refundApply.setCreater(userId); //申请id
+        refundApply.setOrderDetailId(detail.getId()); // 订单明细id
+        refundApply.setOrderId(detail.getOrderId()); // 订单id
+        refundApply.setUserId(detail.getUserId()); // 退款订单所属人
+        refundApply.setRefundAmount(detail.getRealPayAmount()); // 退款金额
+        refundApply.setRefundReason(refundFormDTO.getRefundReason()); // 退款原因
+        refundApply.setQuestionDesc(refundFormDTO.getQuestionDesc()); // 退款问题说明
+        refundApply.setCreater(userId); // 申请id
         if (isStudent) {
             refundApply.setMessage("用户申请退款");
             refundApply.setStatus(RefundStatus.UN_APPROVE.getValue());
@@ -161,7 +160,7 @@ public class RefundApplyServiceImpl extends ServiceImpl<RefundApplyMapper, Refun
         d.setRefundStatus(refundApply.getStatus());
         detailService.updateById(d);
         // 9.如果是管理员申请的，立刻异步发送退款请求
-        if(!isStudent) {
+        if (!isStudent) {
             sendRefundRequestAsync(refundApply);
         }
     }
@@ -223,8 +222,7 @@ public class RefundApplyServiceImpl extends ServiceImpl<RefundApplyMapper, Refun
         }
 
         // 3.分页搜索
-        p = lambdaQuery()
-                .eq(q.getId() != null, RefundApply::getId, q.getId())
+        p = lambdaQuery().eq(q.getId() != null, RefundApply::getId, q.getId())
                 .eq(refundStatus != null, RefundApply::getStatus, refundStatus)
                 .eq(q.getOrderDetailId() != null, RefundApply::getOrderDetailId, q.getOrderDetailId())
                 .eq(q.getOrderId() != null, RefundApply::getOrderId, q.getOrderId())
@@ -339,7 +337,7 @@ public class RefundApplyServiceImpl extends ServiceImpl<RefundApplyMapper, Refun
         detailService.updateRefundStatusById(apply.getOrderDetailId(), r.getStatus());
 
         // 5.异步发送退款请求
-        if(agree) {
+        if (agree) {
             sendRefundRequestAsync(apply);
         }
     }
@@ -350,8 +348,7 @@ public class RefundApplyServiceImpl extends ServiceImpl<RefundApplyMapper, Refun
         // 1.查询退款申请记录
         Long applyId = cancelDTO.getId();
         Long detailId = cancelDTO.getOrderDetailId();
-        List<RefundApply> list = lambdaQuery()
-                .eq(applyId != null, RefundApply::getId, applyId)
+        List<RefundApply> list = lambdaQuery().eq(applyId != null, RefundApply::getId, applyId)
                 .eq(detailId != null, RefundApply::getOrderDetailId, detailId)
                 .list();
         // 2.判断是否为空
@@ -417,18 +414,18 @@ public class RefundApplyServiceImpl extends ServiceImpl<RefundApplyMapper, Refun
         r.setRefundOrderNo(result.getRefundOrderNo());
         // 2.1.判断状态是否退款中
         int status = result.getStatus();
-        if(status == RefundResultDTO.RUNNING){
+        if (status == RefundResultDTO.RUNNING) {
             // 退款中，结果未知，将其它数据写入数据库即可
             updateById(r);
             return;
         }
 
         // 2.2.判断退款成功还是失败
-        if(status == RefundResultDTO.SUCCESS){
+        if (status == RefundResultDTO.SUCCESS) {
             // 退款成功，记录状态
             r.setStatus(RefundStatus.SUCCESS.getValue());
             r.setMessage(RefundStatus.SUCCESS.getProgressName());
-        }else {
+        } else {
             // 2.3.退款失败，需要记录状态及退款失败原因
             r.setStatus(RefundStatus.FAILED.getValue());
             r.setMessage(RefundStatus.FAILED.getProgressName());
@@ -447,21 +444,19 @@ public class RefundApplyServiceImpl extends ServiceImpl<RefundApplyMapper, Refun
             // 4.1.查询子订单信息
             OrderDetail detail = detailService.getById(refundApply.getOrderDetailId());
             // 4.2.发送MQ消息，通知报名成功
-            rabbitMqHelper.send(
-                    MqConstants.Exchange.ORDER_EXCHANGE,
-                    MqConstants.Key.ORDER_REFUND_KEY,
-                    OrderBasicDTO.builder()
-                            .orderId(refundApply.getOrderId())
-                            .userId(refundApply.getUserId())
-                            .courseIds(CollUtils.singletonList(detail.getCourseId())).build());
+            rabbitMqHelper.send(MqConstants.Exchange.ORDER_EXCHANGE,
+                                MqConstants.Key.ORDER_REFUND_KEY,
+                                OrderBasicDTO.builder()
+                                        .orderId(refundApply.getOrderId())
+                                        .userId(refundApply.getUserId())
+                                        .courseIds(CollUtils.singletonList(detail.getCourseId()))
+                                        .build());
         }
     }
 
     @Override
     public List<RefundApply> queryApplyToSend(int index, int size) {
-        Page<RefundApply> page = lambdaQuery()
-                .eq(RefundApply::getStatus, AGREE.getValue())
-                .page(new Page<>(index, size));
+        Page<RefundApply> page = lambdaQuery().eq(RefundApply::getStatus, AGREE.getValue()).page(new Page<>(index, size));
         if (page == null || CollUtils.isEmpty(page.getRecords())) {
             return CollUtils.emptyList();
         }
@@ -489,7 +484,7 @@ public class RefundApplyServiceImpl extends ServiceImpl<RefundApplyMapper, Refun
     public boolean checkRefundStatus(RefundApply refundApply) {
         // 1.先检查是否已经退款成功
         Integer status = refundApply.getStatus();
-        if(!AGREE.equalsValue(status)){
+        if (!AGREE.equalsValue(status)) {
             return true;
         }
         // 2.远程查询，判断是否已经退款成功
