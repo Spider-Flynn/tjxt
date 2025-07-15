@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LessonChangeListener {
 
-    final ILearningLessonService lessonService;
+    private final ILearningLessonService lessonService;
 
     /**
      * 监听课程订单支付消息

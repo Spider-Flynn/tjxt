@@ -23,7 +23,7 @@ public enum PlanStatus implements BaseEnum {
 
 
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
-    public static PlanStatus of(Integer value){
+    public static PlanStatus of(Integer value) {
         if (value == null) {
             return null;
         }
