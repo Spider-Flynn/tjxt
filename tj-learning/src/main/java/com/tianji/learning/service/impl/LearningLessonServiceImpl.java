@@ -235,6 +235,21 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
     }
 
     /**
+     * 获取课程的学习人数
+     * @param courseId 课程 ID
+     * @return {@link Integer }
+     */
+    @Override
+    public Integer countLearningLessonByCourse(Long courseId) {
+        // 1.查询课程的总人数
+        return lambdaQuery().eq(LearningLesson::getCourseId, courseId).in(
+                LearningLesson::getStatus,
+                LessonStatus.NOT_BEGIN.getValue(),
+                LessonStatus.LEARNING.getValue(),
+                LessonStatus.FINISHED.getValue()).count();
+    }
+
+    /**
      * 封装课程查询条件
      * @param userId
      * @param courseIds

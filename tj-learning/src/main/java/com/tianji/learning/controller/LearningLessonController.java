@@ -70,9 +70,25 @@ public class LearningLessonController {
         return lessonService.checkCourseValid(courseId);
     }
 
-    @ApiOperation("获取课程状态信息")
+    /**
+     * 获取课程与用户状态
+     * @param courseId 课程 ID
+     * @return {@link LearningLessonVO }
+     */
+    @ApiOperation("获取课程与用户状态信息")
     @GetMapping("{courseId}")
     public LearningLessonVO getCourseStatus(@ApiParam(value = "课程 ID", example = "1") @PathVariable Long courseId) {
         return lessonService.getCourseStatus(courseId);
+    }
+
+    /**
+     * 统计课程的学习人数
+     * @param courseId
+     * @return
+     */
+    @ApiOperation("统计课程的学习人数")
+    @GetMapping("/{courseId}/count")
+    public Integer countLearningLessonByCourse(@ApiParam(value = "课程 ID", example = "1") @PathVariable Long courseId) {
+        return lessonService.countLearningLessonByCourse(courseId);
     }
 }
