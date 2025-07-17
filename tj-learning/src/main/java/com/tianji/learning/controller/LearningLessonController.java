@@ -27,9 +27,25 @@ public class LearningLessonController {
 
     private final ILearningLessonService lessonService;
 
+    /**
+     * 查询我课程
+     * @param query 查询
+     * @return {@link PageDTO }<{@link LearningLessonVO }>
+     */
     @ApiOperation("查询我的课表，排序字段 latest_learn_time:学习时间排序，create_time:购买时间排序")
     @GetMapping("/page")
     public PageDTO<LearningLessonVO> queryMyLessons(PageQuery query) {
         return lessonService.queryMyLessons(query);
+    }
+
+
+    /**
+     * 查询最近学习的课程
+     * @return {@link LearningLessonVO }
+     */
+    @ApiOperation("查询最近学习的课程")
+    @GetMapping("/now")
+    public LearningLessonVO queryMyCurrentLesson() {
+        return lessonService.queryMyCurrentLesson();
     }
 }
