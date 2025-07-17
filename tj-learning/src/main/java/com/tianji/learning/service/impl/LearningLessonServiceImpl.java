@@ -1,5 +1,7 @@
 package com.tianji.learning.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tianji.api.client.course.CatalogueClient;
@@ -69,6 +71,7 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         // 3.批量保存
         this.saveBatch(lessons);
     }
+
 
     /**
      * 分页查询我课程
@@ -163,5 +166,31 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
             vo.setLatestSectionIndex(cataInfo.getCIndex());
         }
         return vo;
+    }
+
+    /**
+     * 删除用户课程
+     * @param userId   用户 ID
+     * @param courseId 课程 ID
+     */
+    @Override
+    public void removeUserLessons(Long userId, Long courseId) {
+
+        // 1.获取当前用户id
+        if (userId == null) {
+            userId = UserContext.getUser();
+        }
+
+        // 2.删除课程
+        remove(buildUserIdAndCourseIdWrapper(userId, courseId));
+    }
+
+
+    private LambdaQueryWrapper<LearningLesson> buildUserIdAndCourseIdWrapper(Long userId, Long courseId) {
+        LambdaQueryWrapper<LearningLesson> queryWrapper = new QueryWrapper<LearningLesson>()
+                .lambda()
+                .eq(LearningLesson::getUserId, userId)
+                .eq(LearningLesson::getCourseId, courseId);
+        return queryWrapper;
     }
 }

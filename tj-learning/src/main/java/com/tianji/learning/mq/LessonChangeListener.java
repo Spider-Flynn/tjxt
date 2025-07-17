@@ -46,6 +46,27 @@ public class LessonChangeListener {
 
         // 2.调用service，保存课程到课表
         lessonService.addUserLessons(dto.getUserId(), dto.getCourseIds());
+    }
 
+    /**
+     * 监听课程订单取消消息
+     * <p>用于将取消的课程从“我的课程”中移除</p>
+     * @param dto
+     */
+    @RabbitListener(bindings = @QueueBinding(value = @Queue(value = "learning.lesson.refund.queue", durable = "true"),
+                                             exchange = @Exchange(name = MqConstants.Exchange.ORDER_EXCHANGE,
+                                                                  type = ExchangeTypes.TOPIC),
+                                             key = MqConstants.Key.ORDER_REFUND_KEY))
+    public void listenLessonRefund(OrderBasicDTO dto) {
+        log.info("LessonChangeListener 监听到课程订单取消消息，用户{},课程{}", dto.getUserId(), dto.getCourseIds());
+
+        // 1.健壮性-校验
+        if (dto.getUserId() == null || dto.getOrderId() == null || CollUtils.isEmpty(dto.getCourseIds())) {
+            // 不能抛异常，业务逻辑错误，抛异常会出发MQ重试机制
+            return;
+        }
+
+        // 2.调用service，删除课程
+        lessonService.removeUserLessons(dto.getUserId(), dto.getCourseIds().get(0));
     }
 }
