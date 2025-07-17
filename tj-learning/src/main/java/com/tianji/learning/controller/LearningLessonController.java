@@ -3,6 +3,7 @@ package com.tianji.learning.controller;
 
 import com.tianji.common.domain.dto.PageDTO;
 import com.tianji.common.domain.query.PageQuery;
+import com.tianji.common.utils.CollUtils;
 import com.tianji.learning.domain.vo.LearningLessonVO;
 import com.tianji.learning.service.ILearningLessonService;
 import io.swagger.annotations.Api;
@@ -55,6 +56,6 @@ public class LearningLessonController {
     @ApiOperation("删除已学习完的课程")
     @DeleteMapping("/{courseId}")
     public void removeUserLessons(@ApiParam(value = "课程 ID", example = "1") @PathVariable Long courseId) {
-        lessonService.removeUserLessons(null, courseId);
+        lessonService.removeUserLessons(null, CollUtils.singletonList(courseId));
     }
 }

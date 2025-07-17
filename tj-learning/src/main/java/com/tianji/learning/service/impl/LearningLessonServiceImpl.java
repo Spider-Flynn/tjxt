@@ -1,7 +1,6 @@
 package com.tianji.learning.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tianji.api.client.course.CatalogueClient;
@@ -12,6 +11,7 @@ import com.tianji.api.dto.course.CourseSimpleInfoDTO;
 import com.tianji.common.domain.dto.PageDTO;
 import com.tianji.common.domain.query.PageQuery;
 import com.tianji.common.exceptions.BadRequestException;
+import com.tianji.common.exceptions.DbException;
 import com.tianji.common.utils.BeanUtils;
 import com.tianji.common.utils.CollUtils;
 import com.tianji.common.utils.UserContext;
@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.tianji.common.constants.ErrorInfo.Msg.OPERATE_FAILED;
 
 /**
  * <p>
@@ -170,27 +172,40 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
 
     /**
      * 删除用户课程
-     * @param userId   用户 ID
-     * @param courseId 课程 ID
+     * @param userId    用户 ID
+     * @param courseIds 课程 ID
      */
     @Override
-    public void removeUserLessons(Long userId, Long courseId) {
-
-        // 1.获取当前用户id
-        if (userId == null) {
-            userId = UserContext.getUser();
+    public void removeUserLessons(Long userId, List<Long> courseIds) {
+        if (CollUtils.isEmpty(courseIds)) {
+            throw new BadRequestException("课程 ID 列表不能为空");
         }
 
-        // 2.删除课程
-        remove(buildUserIdAndCourseIdWrapper(userId, courseId));
+        // 1.判断删除类型执行不同删除策略
+        boolean isTrue;
+        if (userId == null) {
+            // 说明为用户主动删除，获取用户id
+            userId = UserContext.getUser();
+            // 2.批量删除 delete from learning_lesson where user_id = #{userId} and course_id in (#{courseIds}) and status = 2
+            isTrue = remove(buildDeleteCondition(userId, courseIds, LessonStatus.FINISHED.getValue()));
+        } else {
+            // 说明为订单退款后的删除课程
+            // 2.批量删除 delete from learning_lesson where course_id in (#{courseIds}) and user_id = #{userId}
+            isTrue = remove(buildDeleteCondition(userId, courseIds, null));
+        }
+
+        if (!isTrue) {
+            throw new DbException(OPERATE_FAILED);
+        }
     }
 
-
-    private LambdaQueryWrapper<LearningLesson> buildUserIdAndCourseIdWrapper(Long userId, Long courseId) {
-        LambdaQueryWrapper<LearningLesson> queryWrapper = new QueryWrapper<LearningLesson>()
-                .lambda()
-                .eq(LearningLesson::getUserId, userId)
-                .eq(LearningLesson::getCourseId, courseId);
-        return queryWrapper;
+    private LambdaQueryWrapper<LearningLesson> buildDeleteCondition(Long userId, List<Long> courseIds, Integer status) {
+        LambdaQueryWrapper<LearningLesson> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(LearningLesson::getCourseId, courseIds).eq(userId != null, LearningLesson::getUserId, userId);
+        if (status != null) {
+            wrapper.eq(LearningLesson::getStatus, status);
+        }
+        return wrapper;
     }
+
 }

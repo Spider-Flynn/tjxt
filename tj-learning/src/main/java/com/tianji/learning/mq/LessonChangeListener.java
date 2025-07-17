@@ -67,6 +67,6 @@ public class LessonChangeListener {
         }
 
         // 2.调用service，删除课程
-        lessonService.removeUserLessons(dto.getUserId(), dto.getCourseIds().get(0));
+        lessonService.removeUserLessons(dto.getUserId(), dto.getCourseIds());
     }
 }
