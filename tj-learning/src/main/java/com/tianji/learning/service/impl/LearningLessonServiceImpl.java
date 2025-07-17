@@ -187,11 +187,11 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
             // 说明为用户主动删除，获取用户id
             userId = UserContext.getUser();
             // 2.批量删除 delete from learning_lesson where user_id = #{userId} and course_id in (#{courseIds}) and status = 2
-            isTrue = remove(buildDeleteCondition(userId, courseIds, LessonStatus.FINISHED.getValue()));
+            isTrue = remove(buildUserIdAndCourseIdsAndStatusWrapper(userId, courseIds, LessonStatus.FINISHED.getValue()));
         } else {
             // 说明为订单退款后的删除课程
             // 2.批量删除 delete from learning_lesson where course_id in (#{courseIds}) and user_id = #{userId}
-            isTrue = remove(buildDeleteCondition(userId, courseIds, null));
+            isTrue = remove(buildUserIdAndCourseIdsAndStatusWrapper(userId, courseIds, null));
         }
 
         if (!isTrue) {
@@ -199,7 +199,33 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         }
     }
 
-    private LambdaQueryWrapper<LearningLesson> buildDeleteCondition(Long userId, List<Long> courseIds, Integer status) {
+    /**
+     * 检查课程是否有效
+     * @param courseId 课程 ID
+     * @return {@link Long }
+     */
+    @Override
+    public Long checkCourseValid(Long courseId) {
+        // 1.获取用户信息
+        Long userId = UserContext.getUser();
+
+        // 2.查询课程是否存在
+        LearningLesson lesson = getOne(buildUserIdAndCourseIdsAndStatusWrapper(userId, CollUtils.singletonList(courseId), null));
+
+        // 3.返回结果
+        return lesson == null ? null : lesson.getId();
+    }
+
+    /**
+     * 封装课程查询条件
+     * @param userId
+     * @param courseIds
+     * @param status
+     * @return
+     */
+    private LambdaQueryWrapper<LearningLesson> buildUserIdAndCourseIdsAndStatusWrapper(Long userId,
+                                                                                       List<Long> courseIds,
+                                                                                       Integer status) {
         LambdaQueryWrapper<LearningLesson> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(LearningLesson::getCourseId, courseIds).eq(userId != null, LearningLesson::getUserId, userId);
         if (status != null) {
