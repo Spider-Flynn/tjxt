@@ -217,6 +217,24 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
     }
 
     /**
+     * 获取课程状态相关信息
+     * @param courseId
+     * @return
+     */
+    @Override
+    public LearningLessonVO getCourseStatus(Long courseId) {
+        // 1.获取当前登录用户
+        Long userId = UserContext.getUser();
+        // 2.查询课程信息 select * from xx where user_id = #{userId} AND course_id = #{courseId}
+        LearningLesson lesson = getOne(buildUserIdAndCourseIdsAndStatusWrapper(userId, CollUtils.singletonList(courseId), null));
+        if (lesson == null) {
+            return null;
+        }
+        // 3.处理VO
+        return BeanUtils.copyBean(lesson, LearningLessonVO.class);
+    }
+
+    /**
      * 封装课程查询条件
      * @param userId
      * @param courseIds

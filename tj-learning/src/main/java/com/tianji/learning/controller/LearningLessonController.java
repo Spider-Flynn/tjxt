@@ -59,9 +59,20 @@ public class LearningLessonController {
         lessonService.removeUserLessons(null, CollUtils.singletonList(courseId));
     }
 
+    /**
+     * 检查课程是否有效
+     * @param courseId 课程 ID
+     * @return {@link Long }
+     */
     @ApiOperation("检查课程是否有效")
     @GetMapping("/{courseId}/valid")
     public Long checkCourseValid(@ApiParam(value = "课程 ID", example = "1") @PathVariable Long courseId) {
         return lessonService.checkCourseValid(courseId);
+    }
+
+    @ApiOperation("获取课程状态信息")
+    @GetMapping("{courseId}")
+    public LearningLessonVO getCourseStatus(@ApiParam(value = "课程 ID", example = "1") @PathVariable Long courseId) {
+        return lessonService.getCourseStatus(courseId);
     }
 }
