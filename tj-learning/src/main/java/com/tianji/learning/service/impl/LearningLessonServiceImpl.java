@@ -249,6 +249,12 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
                 LessonStatus.FINISHED.getValue()).count();
     }
 
+    @Override
+    public LearningLesson queryByUserAndCourseId(Long userId, Long courseId) {
+
+        return getOne(buildUserIdAndCourseIdsAndStatusWrapper(userId, CollUtils.singletonList(courseId), null));
+    }
+
     /**
      * 封装课程查询条件
      * @param userId
