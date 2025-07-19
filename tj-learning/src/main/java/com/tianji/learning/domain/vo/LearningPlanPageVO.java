@@ -1,5 +1,6 @@
 package com.tianji.learning.domain.vo;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tianji.common.domain.dto.PageDTO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -36,4 +37,9 @@ public class LearningPlanPageVO extends PageDTO<LearningPlanVO> {
         return this;
     }
 
+    public LearningPlanPageVO emptyPage(Page<?> page) {
+        this.total = page.getTotal();
+        this.pages = page.getPages();
+        return this;
+    }
 }
