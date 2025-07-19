@@ -2,6 +2,7 @@ package com.tianji.learning.controller;
 
 
 import com.tianji.api.dto.leanring.LearningLessonDTO;
+import com.tianji.learning.domain.dto.LearningPlanDTO;
 import com.tianji.learning.domain.dto.LearningRecordFormDTO;
 import com.tianji.learning.service.ILearningRecordService;
 import io.swagger.annotations.Api;

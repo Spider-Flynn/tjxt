@@ -4,6 +4,7 @@ package com.tianji.learning.controller;
 import com.tianji.common.domain.dto.PageDTO;
 import com.tianji.common.domain.query.PageQuery;
 import com.tianji.common.utils.CollUtils;
+import com.tianji.learning.domain.dto.LearningPlanDTO;
 import com.tianji.learning.domain.vo.LearningLessonVO;
 import com.tianji.learning.service.ILearningLessonService;
 import io.swagger.annotations.Api;
@@ -90,5 +91,16 @@ public class LearningLessonController {
     @GetMapping("/{courseId}/count")
     public Integer countLearningLessonByCourse(@ApiParam(value = "课程 ID", example = "1") @PathVariable Long courseId) {
         return lessonService.countLearningLessonByCourse(courseId);
+    }
+
+
+    /**
+     * 提交学习计划
+     * @param planDTO
+     */
+    @ApiOperation("提交学习计划")
+    @PostMapping("/plans")
+    public void addLearningPlan(@RequestBody LearningPlanDTO planDTO) {
+        lessonService.addLearningPlan(planDTO.getCourseId(), planDTO.getFreq());
     }
 }

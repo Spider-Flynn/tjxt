@@ -12,12 +12,14 @@ import com.tianji.common.domain.dto.PageDTO;
 import com.tianji.common.domain.query.PageQuery;
 import com.tianji.common.exceptions.BadRequestException;
 import com.tianji.common.exceptions.DbException;
+import com.tianji.common.utils.AssertUtils;
 import com.tianji.common.utils.BeanUtils;
 import com.tianji.common.utils.CollUtils;
 import com.tianji.common.utils.UserContext;
 import com.tianji.learning.domain.po.LearningLesson;
 import com.tianji.learning.domain.vo.LearningLessonVO;
 import com.tianji.learning.enums.LessonStatus;
+import com.tianji.learning.enums.PlanStatus;
 import com.tianji.learning.mapper.LearningLessonMapper;
 import com.tianji.learning.service.ILearningLessonService;
 import lombok.RequiredArgsConstructor;
@@ -253,6 +255,28 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
     public LearningLesson queryByUserAndCourseId(Long userId, Long courseId) {
 
         return getOne(buildUserIdAndCourseIdsAndStatusWrapper(userId, CollUtils.singletonList(courseId), null));
+    }
+
+    /**
+     * 添加学习计划
+     * @param courseId
+     * @param freq
+     */
+    @Override
+    public void addLearningPlan(Long courseId, Integer freq) {
+        // 1.获取当前登录的用户
+        Long userId = UserContext.getUser();
+        // 2.查询课表中的指定课程有关的数据
+        LearningLesson lesson = queryByUserAndCourseId(userId, courseId);
+        AssertUtils.isNotNull(lesson, "课程信息不存在！");
+        // 3.修改数据
+        LearningLesson l = new LearningLesson();
+        l.setId(lesson.getId());
+        l.setWeekFreq(freq);
+        if (lesson.getPlanStatus() == PlanStatus.NO_PLAN) {
+            l.setPlanStatus(PlanStatus.PLAN_RUNNING);
+        }
+        updateById(l);
     }
 
     /**
