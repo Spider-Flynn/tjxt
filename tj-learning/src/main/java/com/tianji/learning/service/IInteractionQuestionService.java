@@ -32,4 +32,8 @@ public interface IInteractionQuestionService extends IService<InteractionQuestio
     void deleteQuestion(Long id);
 
     PageDTO<QuestionAdminVO> queryQuestionPageAdmin(QuestionAdminPageQuery query);
+
+    void hiddenQuestion(Long id, Boolean hidden);
+
+    QuestionAdminVO queryQuestionByIdAdmin(Long id);
 }

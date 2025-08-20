@@ -6,10 +6,9 @@ import com.tianji.learning.domain.vo.QuestionAdminVO;
 import com.tianji.learning.service.IInteractionQuestionService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * <p>
@@ -27,8 +26,25 @@ public class InteractionQuestionAdminController {
     private final IInteractionQuestionService questionService;
 
     @ApiOperation("管理端分页查询互动问题")
-    @GetMapping("page")
-    public PageDTO<QuestionAdminVO> queryQuestionPageAdmin(QuestionAdminPageQuery query){
+    @GetMapping("/page")
+    public PageDTO<QuestionAdminVO> queryQuestionPageAdmin(QuestionAdminPageQuery query) {
         return questionService.queryQuestionPageAdmin(query);
     }
+
+
+    @ApiOperation("管理端根据id查询互动问题")
+    @GetMapping("{id}")
+    public QuestionAdminVO queryQuestionByIdAdmin(@PathVariable("id") Long id) {
+        return questionService.queryQuestionByIdAdmin(id);
+    }
+
+    @ApiOperation("隐藏或显示问题")
+    @PutMapping("/{id}/hidden/{hidden}")
+    public void hiddenQuestion(@ApiParam(value = "问题id", example = "1") @PathVariable("id") Long id,
+                               @ApiParam(value = "是否隐藏，true/false", example = "true") @PathVariable("hidden")
+                               Boolean hidden) {
+        questionService.hiddenQuestion(id, hidden);
+    }
+
+
 }
