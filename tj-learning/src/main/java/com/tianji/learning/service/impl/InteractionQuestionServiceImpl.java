@@ -1,5 +1,6 @@
 package com.tianji.learning.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tianji.api.client.user.UserClient;
@@ -199,5 +200,27 @@ public class InteractionQuestionServiceImpl extends ServiceImpl<InteractionQuest
             vo.setUserIcon(user.getIcon());
         }
         return vo;
+    }
+
+    /**
+     * 删除我的问题
+     * @param id 问题id
+     */
+    @Override
+    public void deleteQuestion(Long id) {
+        // 1.根据id查询问题
+        InteractionQuestion question = getById(id);
+        // 2.校验问题是否存在
+        if (question == null) {
+            throw new BadRequestException("问题不存在");
+        }
+        // 3.校验问题是否属于当前用户
+        if (!question.getUserId().equals(UserContext.getUser())) {
+            throw new BadRequestException("问题不属于当前用户");
+        }
+        // 4.删除问题
+        removeById(id);
+        // 5.根据问题id删除其下的回答
+        replyMapper.delete(new LambdaQueryWrapper<InteractionReply>().eq(InteractionReply::getQuestionId, id));
     }
 }

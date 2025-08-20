@@ -27,6 +27,7 @@ import javax.validation.Valid;
 @RequestMapping("/questions")
 public class InteractionQuestionController {
 
+
     private final IInteractionQuestionService questionService;
 
 
@@ -43,7 +44,7 @@ public class InteractionQuestionController {
     }
 
     @ApiOperation("分页查询互动问题")
-    @GetMapping("page")
+    @GetMapping("/page")
     public PageDTO<QuestionVO> queryQuestionPage(QuestionPageQuery query) {
         return questionService.queryQuestionPage(query);
     }
@@ -52,5 +53,11 @@ public class InteractionQuestionController {
     @GetMapping("/{id}")
     public QuestionVO queryQuestionById(@ApiParam(value = "问题id", example = "1") @PathVariable("id") Long id) {
         return questionService.queryQuestionById(id);
+    }
+
+    @ApiOperation("删除我的问题")
+    @DeleteMapping("/{id}")
+    public void deleteQuestion(@ApiParam(value = "问题id", example = "1") @PathVariable("id") Long id) {
+        questionService.deleteQuestion(id);
     }
 }
