@@ -64,18 +64,21 @@ public class InteractionReplyServiceImpl extends ServiceImpl<InteractionReplyMap
             lambdaUpdate().setSql("reply_times = reply_times + 1").eq(InteractionReply::getId, replyDTO.getAnswerId()).update();
         }
         // 3.3.尝试更新问题表中的状态、 最近一次回答、回答数量
-        questionService.lambdaUpdate()
-                .set(isAnswer, InteractionQuestion::getLatestAnswerId, reply.getAnswerId())
-                .setSql(isAnswer, "answer_times = answer_times + 1")
-                .set(replyDTO.getIsStudent(), InteractionQuestion::getStatus, QuestionStatus.UN_CHECK.getValue())
-                .eq(InteractionQuestion::getId, replyDTO.getQuestionId())
-                .update();
+        if (replyDTO.getIsStudent()) {
+            // 3.4.是学生回答，需要更新问题表中的回答数量
+            questionService.lambdaUpdate()
+                    .set(isAnswer, InteractionQuestion::getLatestAnswerId, reply.getAnswerId())
+                    .setSql(isAnswer, "answer_times = answer_times + 1")
+                    .set(InteractionQuestion::getStatus, QuestionStatus.UN_CHECK.getValue())
+                    .eq(InteractionQuestion::getId, replyDTO.getQuestionId())
+                    .update();
+        }
 
         // 4. TODO：尝试累加积分
-        if (replyDTO.getIsStudent()) {
-            // 学生才需要累加积分
-            mqHelper.send(MqConstants.Exchange.LEARNING_EXCHANGE, MqConstants.Key.WRITE_REPLY, 5);
-        }
+        // if (replyDTO.getIsStudent()) {
+        //     // 学生才需要累加积分
+        //     mqHelper.send(MqConstants.Exchange.LEARNING_EXCHANGE, MqConstants.Key.WRITE_REPLY, 5);
+        // }
     }
 
     /**
@@ -163,6 +166,83 @@ public class InteractionReplyServiceImpl extends ServiceImpl<InteractionReplyMap
             // v.setLiked(bizLiked.contains(r.getId()));
         }
         return new PageDTO<>(page.getTotal(), page.getPages(), list);
+    }
+
+    /**
+     * 隐藏或显示回答或评论
+     * @param id     回答或评论id
+     * @param hidden 是否隐藏
+     */
+    @Override
+    @Transactional
+    public void hiddenReply(Long id, Boolean hidden) {
+        // 1.查询
+        InteractionReply old = getById(id);
+        if (old == null) {
+            return;
+        }
+
+        // 2.隐藏回答
+        InteractionReply reply = new InteractionReply();
+        reply.setId(id);
+        reply.setHidden(hidden);
+        updateById(reply);
+
+        // 3.隐藏评论，先判断是否是回答，回答才需要隐藏下属评论
+        if (old.getAnswerId() != null && old.getAnswerId() != 0) {
+            // 3.1.有answerId，说明自己是评论，无需处理
+            return;
+        }
+        // 3.2.没有answerId，说明自己是回答，需要隐藏回答下的评论
+        lambdaUpdate().set(InteractionReply::getHidden, hidden).eq(InteractionReply::getAnswerId, id).update();
+    }
+
+    /**
+     * 根据id查询回答或评论
+     * @param id 回答或评论id
+     * @return 回答或评论详情
+     */
+    @Override
+    public ReplyVO queryReplyById(Long id) {
+        // 1.根据id查询
+        InteractionReply r = getById(id);
+        // 2.数据处理，需要查询用户信息、评论目标信息、当前用户是否点赞
+        Set<Long> userIds = new HashSet<>();
+        // 2.1.获取用户 id
+        userIds.add(r.getUserId());
+        // 2.2.查询评论目标，如果评论目标不是匿名，则需要查询出目标回复的用户id
+        if (r.getTargetReplyId() != null && r.getTargetReplyId() != 0) {
+            InteractionReply target = getById(r.getTargetReplyId());
+            if (!target.getAnonymity()) {
+                userIds.add(target.getUserId());
+            }
+        }
+        // 2.3.查询用户详细
+        Map<Long, UserDTO> userMap = new HashMap<>(userIds.size());
+        if (userIds.size() > 0) {
+            List<UserDTO> users = userClient.queryUserByIds(userIds);
+            userMap = users.stream().collect(Collectors.toMap(UserDTO::getId, u -> u));
+        }
+        // TODO：2.4.查询用户点赞状态
+        // Set<Long> bizLiked = remarkClient.isBizLiked(CollUtils.singletonList(id));
+        // 4.处理VO
+        // 4.1.拷贝基础属性
+        ReplyVO v = BeanUtils.toBean(r, ReplyVO.class);
+        // 4.2.回复人信息
+        UserDTO userDTO = userMap.get(r.getUserId());
+        if (userDTO != null) {
+            v.setUserIcon(userDTO.getIcon());
+            v.setUserName(userDTO.getName());
+            v.setUserType(userDTO.getType());
+        }
+        // 4.3.目标用户
+        UserDTO targetUser = userMap.get(r.getTargetUserId());
+        if (targetUser != null) {
+            v.setTargetUserName(targetUser.getName());
+        }
+        // TODO：4.4.点赞状态
+        // v.setLiked(bizLiked.contains(id));
+        return v;
     }
 
 }
