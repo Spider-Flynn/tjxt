@@ -25,7 +25,7 @@ public class LessonStatusCheckTask {
     private final ILearningLessonService lessonService;
 
     /**
-     * 每分钟一次检查课程状态
+     * 每分钟一次检查课程状态 V1
      * <p>性能问题：每次都会加载所有未过期的课程到内存中进行判断，即使其中只有少数课程真正过期。</p>
      * <p>冗余更新：即使课程状态未变化，也会发起更新请求，造成数据库不必要的写操作。</p>
      */
@@ -48,7 +48,11 @@ public class LessonStatusCheckTask {
         lessonService.updateBatchById(list);
     }
 
-    @Scheduled(cron = "0 * * * * ?")
+    /**
+     * 每分钟一次检查课程状态 V2
+     * 测试环境，先改为每1h
+     */
+    @Scheduled(cron = "0 0 * * * ?")
     public void lessonStatusCheckV2() {
         log.info("开始检查课程状态");
 
