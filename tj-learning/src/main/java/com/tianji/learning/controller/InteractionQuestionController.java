@@ -8,6 +8,7 @@ import com.tianji.learning.domain.vo.QuestionVO;
 import com.tianji.learning.service.IInteractionQuestionService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,4 +48,9 @@ public class InteractionQuestionController {
         return questionService.queryQuestionPage(query);
     }
 
+    @ApiOperation("根据id查询问题详情")
+    @GetMapping("/{id}")
+    public QuestionVO queryQuestionById(@ApiParam(value = "问题id", example = "1") @PathVariable("id") Long id) {
+        return questionService.queryQuestionById(id);
+    }
 }
