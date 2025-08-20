@@ -26,6 +26,10 @@ public class QuestionAdminVO {
 
     @ApiModelProperty("提问者昵称")
     private String userName;
+    @ApiModelProperty("提问者头像")
+    private String userIcon;
+    @ApiModelProperty("教师名称")
+    private String teacherName;
     @ApiModelProperty("课程名称")
     private String courseName;
     @ApiModelProperty("章名称")
@@ -35,18 +39,3 @@ public class QuestionAdminVO {
     @ApiModelProperty("三级分类名称，中间使用/隔开")
     private String categoryName;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

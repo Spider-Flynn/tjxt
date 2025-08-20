@@ -343,7 +343,7 @@ public class InteractionQuestionServiceImpl extends ServiceImpl<InteractionQuest
         UserDTO user = userClient.queryUserById(question.getUserId());
         if (user != null) {
             vo.setUserName(user.getName());
-            // vo.setUserIcon(user.getIcon());
+            vo.setUserIcon(user.getIcon());
         }
         // 4.查询课程信息
         CourseFullInfoDTO cInfo = courseClient.getCourseInfoById(question.getCourseId(), false, true);
@@ -352,12 +352,12 @@ public class InteractionQuestionServiceImpl extends ServiceImpl<InteractionQuest
             vo.setCourseName(cInfo.getName());
             // 4.2.分类信息
             vo.setCategoryName(categoryCache.getCategoryNames(cInfo.getCategoryIds()));
-            // // 4.3.教师信息
-            // List<Long> teacherIds = cInfo.getTeacherIds();
-            // List<UserDTO> teachers = userClient.queryUserByIds(teacherIds);
-            // if (CollUtils.isNotEmpty(teachers)) {
-            //     vo.setTeacherName(teachers.stream().map(UserDTO::getName).collect(Collectors.joining("/")));
-            // }
+            // 4.3.教师信息
+            List<Long> teacherIds = cInfo.getTeacherIds();
+            List<UserDTO> teachers = userClient.queryUserByIds(teacherIds);
+            if (CollUtils.isNotEmpty(teachers)) {
+                vo.setTeacherName(teachers.stream().map(UserDTO::getName).collect(Collectors.joining("/")));
+            }
         }
         // 5.查询章节信息
         List<CataSimpleInfoDTO> catas = catalogueClient.batchQueryCatalogue(List.of(
@@ -375,7 +375,7 @@ public class InteractionQuestionServiceImpl extends ServiceImpl<InteractionQuest
 
     /**
      * 隐藏或显示问题
-     * @param id 问题id
+     * @param id     问题id
      * @param hidden 是否隐藏
      */
     @Override
