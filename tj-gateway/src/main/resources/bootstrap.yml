@@ -20,6 +20,10 @@ spring:
             refresh: false
     gateway:
       routes:
+        - id: rs
+          uri: lb://remark-service
+          predicates:
+            - Path=/rs/**
         - id: ms
           uri: lb://media-service
           predicates:

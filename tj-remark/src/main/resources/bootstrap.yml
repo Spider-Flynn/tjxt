@@ -1,0 +1,42 @@
+server:
+  port: 8091  #??
+  tomcat:
+    uri-encoding: UTF-8   #????
+spring:
+  profiles:
+    active: dev
+  application:
+    name: remark-service
+  cloud:
+    nacos:
+      config:
+        file-extension: yaml
+        shared-configs: # ????
+          - data-id: shared-spring.yaml # ??spring??
+            refresh: false
+          - data-id: shared-redis.yaml # ??redis??
+            refresh: false
+          - data-id: shared-mybatis.yaml # ??mybatis??
+            refresh: false
+          - data-id: shared-logs.yaml # ??????
+            refresh: false
+          - data-id: shared-feign.yaml # ??feign??
+            refresh: false
+          - data-id: shared-mq.yaml # ??mq??
+            refresh: false
+tj:
+  swagger:
+    enable: true
+    enableResponseWrap: true
+    package-path: com.tianji.remark.controller
+    title: ???? - ????????
+    description: ?????????????
+    contact-name: ????·???
+    contact-url: http://www.itcast.cn/
+    contact-email: zhanghuyi@itcast.cn
+    version: v1.0
+  jdbc:
+    database: tj_remark
+  auth:
+    resource:
+      enable: true # ??????
