@@ -5,6 +5,8 @@ import com.tianji.remark.domain.po.LikedRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -17,4 +19,6 @@ import javax.validation.Valid;
 public interface ILikedRecordService extends IService<LikedRecord> {
 
     void addLikeRecord(@Valid LikeRecordFormDTO recordDTO);
+
+    Set<Long> isBizLiked(List<Long> bizIds);
 }

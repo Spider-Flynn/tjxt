@@ -14,6 +14,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import static com.tianji.common.constants.MqConstants.Exchange.LIKE_RECORD_EXCHANGE;
 import static com.tianji.common.constants.MqConstants.Key.LIKED_TIMES_KEY_TEMPLATE;
 
@@ -46,6 +50,21 @@ public class LikedRecordServiceImpl extends ServiceImpl<LikedRecordMapper, Liked
                 LIKE_RECORD_EXCHANGE,
                 StringUtils.format(LIKED_TIMES_KEY_TEMPLATE, recordDTO.getBizType()),
                 LikedTimesDTO.of(recordDTO.getBizId(), likedTimes));
+    }
+
+    /**
+     * 查询用户是否点赞了某业务
+     * @param bizIds 业务id列表
+     * @return 已点赞的业务id列表
+     */
+    @Override
+    public Set<Long> isBizLiked(List<Long> bizIds) {
+        // 1.获取登录用户id
+        Long userId = UserContext.getUser();
+        // 2.查询点赞状态
+        List<LikedRecord> list = lambdaQuery().in(LikedRecord::getBizId, bizIds).eq(LikedRecord::getUserId, userId).list();
+        // 3.返回结果
+        return list.stream().map(LikedRecord::getBizId).collect(Collectors.toSet());
     }
 
     private boolean unlike(LikeRecordFormDTO recordDTO) {
