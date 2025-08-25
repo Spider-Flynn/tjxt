@@ -94,7 +94,7 @@ public class LikedRecordServiceRedisImpl extends ServiceImpl<LikedRecordMapper, 
      */
     @Override
     public void readLikedTimesAndSendMessage(String bizType, int maxBizSize) {
-        // 1.读取并移除Redis中缓存的点赞总数
+        // 1.读取并移除Redis中缓存的点赞总数 - 操作分数小的maxBizSize个数据
         String key = RedisConstants.LIKES_TIMES_KEY_PREFIX + bizType;
         Set<ZSetOperations.TypedTuple<String>> tuples = redisTemplate.opsForZSet().popMin(key, maxBizSize);
         if (CollUtils.isEmpty(tuples)) {

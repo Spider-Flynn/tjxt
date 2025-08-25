@@ -29,7 +29,8 @@ import static com.tianji.common.constants.MqConstants.Key.LIKED_TIMES_KEY_TEMPLA
 @Slf4j
 // @Service
 @RequiredArgsConstructor
-public class LikedRecordServiceImpl extends ServiceImpl<LikedRecordMapper, LikedRecord> implements ILikedRecordService {
+// 这个类不用了，也不想删，就先设计为抽象类，不让它报错
+public abstract class LikedRecordServiceImpl extends ServiceImpl<LikedRecordMapper, LikedRecord> implements ILikedRecordService {
 
     private final RabbitMqHelper mqHelper;
 
