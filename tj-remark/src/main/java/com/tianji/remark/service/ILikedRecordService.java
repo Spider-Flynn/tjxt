@@ -1,7 +1,10 @@
 package com.tianji.remark.service;
 
+import com.tianji.remark.domain.dto.LikeRecordFormDTO;
 import com.tianji.remark.domain.po.LikedRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import javax.validation.Valid;
 
 /**
  * <p>
@@ -13,4 +16,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface ILikedRecordService extends IService<LikedRecord> {
 
+    void addLikeRecord(@Valid LikeRecordFormDTO recordDTO);
 }
