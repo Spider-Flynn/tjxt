@@ -33,7 +33,7 @@ public class LikedRecordController {
         likedRecordService.addLikeRecord(recordDTO);
     }
 
-    @GetMapping("list")
+    @GetMapping("/list")
     @ApiOperation("查询指定业务id的点赞状态")
     public Set<Long> isBizLiked(@RequestParam("bizIds") List<Long> bizIds){
         return likedRecordService.isBizLiked(bizIds);
