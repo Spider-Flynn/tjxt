@@ -5,11 +5,14 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tianji.common.utils.CollUtils;
 import com.tianji.common.utils.DateUtils;
 import com.tianji.common.utils.UserContext;
+import com.tianji.learning.constants.RedisConstants;
 import com.tianji.learning.domain.po.PointsRecord;
 import com.tianji.learning.domain.vo.PointsStatisticsVO;
 import com.tianji.learning.enums.PointsRecordType;
 import com.tianji.learning.mapper.PointsRecordMapper;
 import com.tianji.learning.service.IPointsRecordService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -25,7 +28,9 @@ import java.util.List;
  * @since 2025-08-26
  */
 @Service
+@RequiredArgsConstructor
 public class PointsRecordServiceImpl extends ServiceImpl<PointsRecordMapper, PointsRecord> implements IPointsRecordService {
+    private final StringRedisTemplate redisTemplate;
 
     /**
      * 新增积分明细
@@ -61,9 +66,15 @@ public class PointsRecordServiceImpl extends ServiceImpl<PointsRecordMapper, Poi
         p.setUserId(userId);
         p.setType(type);
         save(p);
+        // 4.更新总积分到Redis
+        String key = RedisConstants.POINTS_BOARD_KEY_PREFIX + now.format(DateUtils.POINTS_BOARD_SUFFIX_FORMATTER);
+        redisTemplate.opsForZSet().incrementScore(key, userId.toString(), realPoints);
     }
 
-
+    /**
+     * 查询我的本周积分总量
+     * @return 本周积分
+     */
     @Override
     public Integer queryMyPointsToWeek() {
         // 1.获取用户
@@ -79,6 +90,10 @@ public class PointsRecordServiceImpl extends ServiceImpl<PointsRecordMapper, Poi
         return getBaseMapper().queryUserPointsByWeek(wrapper);
     }
 
+    /**
+     * 查询我的今日积分详情
+     * @return 今日积分
+     */
     @Override
     public List<PointsStatisticsVO> queryMyPointsToday() {
         // 1.获取用户
