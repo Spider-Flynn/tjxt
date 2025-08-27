@@ -12,13 +12,16 @@ import com.tianji.learning.domain.vo.SignResultVO;
 import com.tianji.learning.mq.message.SignInMessage;
 import com.tianji.learning.service.ISignRecordService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SignRecordServiceImpl implements ISignRecordService {
@@ -73,6 +76,40 @@ public class SignRecordServiceImpl implements ISignRecordService {
         return vo;
     }
 
+    /**
+     * 获取签到记录
+     * @return 签到记录
+     */
+    @Override
+    public List<Integer> getSignRecords() {
+        // 1.获取登录用户
+        Long userId = UserContext.getUser();
+        // 2.获取日期
+        LocalDate now = LocalDate.now();
+        // 3.拼接key
+        String key = RedisConstants.SIGN_RECORD_KEY_PREFIX + userId + now.format(DateUtils.SIGN_DATE_SUFFIX_FORMATTER);
+        // 4.获取本月从第一天开始，到今天为止的所有签到记录
+        int len = now.getDayOfMonth();
+        List<Long> result = redisTemplate.opsForValue()
+                .bitField(key, BitFieldSubCommands.create().get(BitFieldSubCommands.BitFieldType.unsigned(len)).valueAt(0));
+        if (CollUtils.isEmpty(result)) {
+            return List.of();
+        }
+        int num = result.get(0).intValue();
+        log.info("num: {}", num);
+        // 5.封装返回
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i < len; i++) {
+            if ((num & 1) == 1) {
+                list.add(1);
+            } else {
+                list.add(0);
+            }
+            num >>>= 1;
+        }
+        return list;
+    }
+
     private int countSignDays(String key, int len) {
         // 1.获取本月从第一天开始，到今天为止的所有签到记录
         List<Long> result = redisTemplate.opsForValue()
@@ -81,6 +118,7 @@ public class SignRecordServiceImpl implements ISignRecordService {
             return 0;
         }
         int num = result.get(0).intValue();
+        log.info("num: {}", num);
         // 2.定义一个计数器
         int count = 0;
         // 3.循环，与1做与运算，得到最后一个bit，判断是否为0，为0则终止，为1则继续
