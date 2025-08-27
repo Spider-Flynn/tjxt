@@ -7,6 +7,7 @@ import com.tianji.api.client.remark.RemarkClient;
 import com.tianji.api.client.user.UserClient;
 import com.tianji.api.dto.user.UserDTO;
 import com.tianji.common.autoconfigure.mq.RabbitMqHelper;
+import com.tianji.common.constants.MqConstants;
 import com.tianji.common.domain.dto.PageDTO;
 import com.tianji.common.exceptions.BadRequestException;
 import com.tianji.common.utils.BeanUtils;
@@ -79,11 +80,11 @@ public class InteractionReplyServiceImpl extends ServiceImpl<InteractionReplyMap
                     .update();
         }
 
-        // 4. TODO：尝试累加积分
-        // if (replyDTO.getIsStudent()) {
-        //     // 学生才需要累加积分
-        //     mqHelper.send(MqConstants.Exchange.LEARNING_EXCHANGE, MqConstants.Key.WRITE_REPLY, 5);
-        // }
+        // 4.尝试累加积分
+        if (replyDTO.getIsStudent()) {
+            // 学生才需要累加积分
+            mqHelper.send(MqConstants.Exchange.LEARNING_EXCHANGE, MqConstants.Key.WRITE_REPLY, 5);
+        }
     }
 
     /**

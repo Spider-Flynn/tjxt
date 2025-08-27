@@ -51,6 +51,7 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
     private final CourseClient courseClient;
     private final CatalogueClient catalogueClient;
     private final LearningRecordMapper recordMapper;
+    private final PointsRecordServiceImpl pointsRecordService;
 
     /**
      * 添加用户课程
@@ -92,8 +93,7 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         Long userId = UserContext.getUser();
         // 2.分页查询
         // select * from learning_lesson where user_id = #{userId} order by latest_learn_time limit 0, 5
-        Page<LearningLesson> page = lambdaQuery()
-                .eq(LearningLesson::getUserId, userId)
+        Page<LearningLesson> page = lambdaQuery().eq(LearningLesson::getUserId, userId)
                 .page(query.toMpPage("latest_learn_time", false));
         List<LearningLesson> records = page.getRecords();
         if (CollUtils.isEmpty(records)) {
@@ -129,8 +129,7 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         // 1.获取当前登录的用户
         Long userId = UserContext.getUser();
         // 2.查询正在学习的课程 select * from xx where user_id = #{userId} AND status = 1 order by latest_learn_time limit 1
-        LearningLesson lesson = lambdaQuery()
-                .eq(LearningLesson::getUserId, userId)
+        LearningLesson lesson = lambdaQuery().eq(LearningLesson::getUserId, userId)
                 .eq(LearningLesson::getStatus, LessonStatus.LEARNING.getValue())
                 .orderByDesc(LearningLesson::getLatestLearnTime)
                 .last("limit 1")
@@ -274,7 +273,6 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
      * @param query
      * @return
      */
-
     @Override
     public LearningPlanPageVO queryMyPlans(PageQuery query) {
         LearningPlanPageVO result = new LearningPlanPageVO();
@@ -286,8 +284,9 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         LocalDateTime end = DateUtils.getWeekEndTime(now);
         // 3.查询总的统计数据
         // 3.1.本周总的已学习小节数量
-        Integer weekFinished = recordMapper.selectCount(new LambdaQueryWrapper<LearningRecord>()
-                                                                .eq(LearningRecord::getUserId, userId)
+        Integer weekFinished = recordMapper.selectCount(new LambdaQueryWrapper<LearningRecord>().eq(
+                        LearningRecord::getUserId,
+                        userId)
                                                                 .eq(LearningRecord::getFinished, true)
                                                                 .gt(LearningRecord::getFinishTime, begin)
                                                                 .lt(LearningRecord::getFinishTime, end));
@@ -296,12 +295,11 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         Integer weekTotalPlan = getBaseMapper().queryTotalPlan(userId);
 
         result.setWeekTotalPlan(weekTotalPlan);
-        // TODO 3.3.本周学习积分
-
+        // 3.3.本周学习积分
+        Integer weekPoints = pointsRecordService.queryMyPointsToWeek();
         // 4.查询分页数据
         // 4.1.分页查询课表信息以及学习计划信息
-        Page<LearningLesson> p = lambdaQuery()
-                .eq(LearningLesson::getUserId, userId)
+        Page<LearningLesson> p = lambdaQuery().eq(LearningLesson::getUserId, userId)
                 .eq(LearningLesson::getPlanStatus, PlanStatus.PLAN_RUNNING)
                 .in(LearningLesson::getStatus, LessonStatus.NOT_BEGIN, LessonStatus.LEARNING)
                 .page(query.toMpPage("latest_learn_time", false));
@@ -309,6 +307,7 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         if (CollUtils.isEmpty(records)) {
             return result.emptyPage(p);
         }
+        result.setWeekPoints(weekPoints);
         // 4.2.查询课表对应的课程信息
         Map<Long, CourseSimpleInfoDTO> cMap = queryCourseSimpleInfoList(records);
         // 4.3.统计每一个课程本周已学习小节数量

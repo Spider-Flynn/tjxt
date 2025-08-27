@@ -18,4 +18,7 @@ public interface IPointsRecordService extends IService<PointsRecord> {
     void addPointsRecord(Long userId, int points, PointsRecordType type);
 
     List<PointsStatisticsVO> queryMyPointsToday();
+
+
+    Integer queryMyPointsToWeek();
 }

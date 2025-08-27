@@ -23,4 +23,7 @@ public interface PointsRecordMapper extends BaseMapper<PointsRecord> {
 
     @Select("SELECT type, SUM(points) AS points FROM points_record ${ew.customSqlSegment} GROUP BY type")
     List<PointsRecord> queryUserPointsByDate(@Param(Constants.WRAPPER) QueryWrapper<PointsRecord> wrapper);
+
+    @Select("SELECT SUM(points) AS points FROM points_record ${ew.customSqlSegment} GROUP BY type")
+    Integer queryUserPointsByWeek(@Param(Constants.WRAPPER) QueryWrapper<PointsRecord> wrapper);
 }

@@ -12,6 +12,7 @@ import com.tianji.learning.mapper.PointsRecordMapper;
 import com.tianji.learning.service.IPointsRecordService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +63,21 @@ public class PointsRecordServiceImpl extends ServiceImpl<PointsRecordMapper, Poi
         save(p);
     }
 
+
+    @Override
+    public Integer queryMyPointsToWeek() {
+        // 1.获取用户
+        Long userId = UserContext.getUser();
+        // 2.获取日期
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime begin = DateUtils.getWeekBeginTime(LocalDate.from(now));
+        LocalDateTime end = DateUtils.getWeekEndTime(LocalDate.from(now));
+        // 3.构建查询条件
+        QueryWrapper<PointsRecord> wrapper = new QueryWrapper<>();
+        wrapper.lambda().eq(PointsRecord::getUserId, userId).between(PointsRecord::getCreateTime, begin, end);
+        // 4.查询
+        return getBaseMapper().queryUserPointsByWeek(wrapper);
+    }
 
     @Override
     public List<PointsStatisticsVO> queryMyPointsToday() {

@@ -36,4 +36,5 @@ public class LearningPointsListener {
         log.info("监听签到事件，用户id：{}，积分：{}", message.getUserId(), message.getPoints());
         recordService.addPointsRecord(message.getUserId(), message.getPoints(), PointsRecordType.SIGN);
     }
+
 }
