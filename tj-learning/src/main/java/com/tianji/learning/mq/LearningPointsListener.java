@@ -5,6 +5,7 @@ import com.tianji.learning.enums.PointsRecordType;
 import com.tianji.learning.mq.message.SignInMessage;
 import com.tianji.learning.service.IPointsRecordService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.ExchangeTypes;
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.Queue;
@@ -12,6 +13,7 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class LearningPointsListener {
@@ -31,6 +33,7 @@ public class LearningPointsListener {
                                              exchange = @Exchange(name = MqConstants.Exchange.LEARNING_EXCHANGE,
                                                                   type = ExchangeTypes.TOPIC), key = MqConstants.Key.SIGN_IN))
     public void listenSignInMessage(SignInMessage message) {
+        log.info("监听签到事件，用户id：{}，积分：{}", message.getUserId(), message.getPoints());
         recordService.addPointsRecord(message.getUserId(), message.getPoints(), PointsRecordType.SIGN);
     }
 }
