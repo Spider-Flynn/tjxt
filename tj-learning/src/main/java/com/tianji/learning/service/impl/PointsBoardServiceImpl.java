@@ -1,5 +1,6 @@
 package com.tianji.learning.service.impl;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tianji.api.client.user.UserClient;
 import com.tianji.api.dto.user.UserDTO;
@@ -13,6 +14,7 @@ import com.tianji.learning.domain.vo.PointsBoardItemVO;
 import com.tianji.learning.domain.vo.PointsBoardVO;
 import com.tianji.learning.mapper.PointsBoardMapper;
 import com.tianji.learning.service.IPointsBoardService;
+import com.tianji.learning.utils.TableInfoContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.BoundZSetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -94,11 +96,6 @@ public class PointsBoardServiceImpl extends ServiceImpl<PointsBoardMapper, Point
         getBaseMapper().createPointsBoardTable(POINTS_BOARD_TABLE_PREFIX + season);
     }
 
-    private List<PointsBoard> queryHistoryBoardList(PointsBoardQuery query) {
-        // TODO
-        return null;
-    }
-
     @Override
     public List<PointsBoard> queryCurrentBoardList(String key, Integer pageNo, Integer pageSize) {
         // 1.计算分页
@@ -127,9 +124,34 @@ public class PointsBoardServiceImpl extends ServiceImpl<PointsBoardMapper, Point
         return list;
     }
 
+    private List<PointsBoard> queryHistoryBoardList(PointsBoardQuery query) {
+        // 1.计算表名
+        TableInfoContext.setInfo(POINTS_BOARD_TABLE_PREFIX + query.getSeason());
+        // 2.查询数据
+        Page<PointsBoard> page = page(query.toMpPage());
+        // 3.数据处理
+        List<PointsBoard> records = page.getRecords();
+        if (CollUtils.isEmpty(records)) {
+            return CollUtils.emptyList();
+        }
+        records.forEach(b -> b.setId(b.getId()));
+        return records;
+    }
+
     private PointsBoard queryMyHistoryBoard(Long season) {
-        // TODO
-        return null;
+        // 1.获取登录用户
+        Long userId = UserContext.getUser();
+        // 2.计算表名
+        TableInfoContext.setInfo(POINTS_BOARD_TABLE_PREFIX + season);
+        // 3.查询数据
+        Optional<PointsBoard> opt = lambdaQuery().eq(PointsBoard::getUserId, userId).oneOpt();
+        if (opt.isEmpty()) {
+            return null;
+        }
+        // 4.转换数据
+        PointsBoard pointsBoard = opt.get();
+        pointsBoard.setId(pointsBoard.getId());
+        return pointsBoard;
     }
 
     private PointsBoard queryMyCurrentBoard(String key) {
