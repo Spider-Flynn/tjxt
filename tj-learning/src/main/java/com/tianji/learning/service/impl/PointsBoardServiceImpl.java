@@ -23,6 +23,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.tianji.learning.constants.LearningConstants.POINTS_BOARD_TABLE_PREFIX;
+
 /**
  * <p>
  * 学霸天梯榜 服务实现类
@@ -62,7 +64,7 @@ public class PointsBoardServiceImpl extends ServiceImpl<PointsBoardMapper, Point
         // 4.1.处理我的信息
         if (myBoard != null) {
             vo.setPoints(myBoard.getPoints());
-            vo.setRank(myBoard.getRank());
+            vo.setRank(myBoard.getId());
         }
         if (CollUtils.isEmpty(list)) {
             return vo;
@@ -79,7 +81,7 @@ public class PointsBoardServiceImpl extends ServiceImpl<PointsBoardMapper, Point
         for (PointsBoard p : list) {
             PointsBoardItemVO v = new PointsBoardItemVO();
             v.setPoints(p.getPoints());
-            v.setRank(p.getRank());
+            v.setRank(p.getId());
             v.setName(userMap.get(p.getUserId()));
             items.add(v);
         }
@@ -87,11 +89,17 @@ public class PointsBoardServiceImpl extends ServiceImpl<PointsBoardMapper, Point
         return vo;
     }
 
+    @Override
+    public void createPointsBoardTableBySeason(Integer season) {
+        getBaseMapper().createPointsBoardTable(POINTS_BOARD_TABLE_PREFIX + season);
+    }
+
     private List<PointsBoard> queryHistoryBoardList(PointsBoardQuery query) {
         // TODO
         return null;
     }
 
+    @Override
     public List<PointsBoard> queryCurrentBoardList(String key, Integer pageNo, Integer pageSize) {
         // 1.计算分页
         int from = (pageNo - 1) * pageSize;
@@ -102,7 +110,7 @@ public class PointsBoardServiceImpl extends ServiceImpl<PointsBoardMapper, Point
             return CollUtils.emptyList();
         }
         // 3.封装
-        int rank = from + 1;
+        long rank = from + 1;
         List<PointsBoard> list = new ArrayList<>(tuples.size());
         for (ZSetOperations.TypedTuple<String> tuple : tuples) {
             String userId = tuple.getValue();
@@ -113,7 +121,7 @@ public class PointsBoardServiceImpl extends ServiceImpl<PointsBoardMapper, Point
             PointsBoard p = new PointsBoard();
             p.setUserId(Long.valueOf(userId));
             p.setPoints(points.intValue());
-            p.setRank(rank++);
+            p.setId(rank++);
             list.add(p);
         }
         return list;
@@ -136,7 +144,7 @@ public class PointsBoardServiceImpl extends ServiceImpl<PointsBoardMapper, Point
         // 5.封装返回
         PointsBoard p = new PointsBoard();
         p.setPoints(points == null ? 0 : points.intValue());
-        p.setRank(rank == null ? 0 : rank.intValue() + 1);
+        p.setId(rank == null ? 0 : rank + 1);
         return p;
     }
 }

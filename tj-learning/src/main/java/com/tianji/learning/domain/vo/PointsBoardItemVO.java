@@ -10,7 +10,7 @@ public class PointsBoardItemVO {
     @ApiModelProperty("积分值")
     private Integer points;
     @ApiModelProperty("名次")
-    private Integer rank;
+    private Long rank;
     @ApiModelProperty("学生姓名")
     private String name;
 }
