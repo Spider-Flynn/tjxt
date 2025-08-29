@@ -7,8 +7,10 @@ import com.tianji.learning.domain.po.PointsBoard;
 import com.tianji.learning.service.IPointsBoardSeasonService;
 import com.tianji.learning.service.IPointsBoardService;
 import com.tianji.learning.utils.TableInfoContext;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -23,6 +25,7 @@ public class PointsBoardPersistentHandler {
     private final IPointsBoardSeasonService seasonService;
 
     private final IPointsBoardService pointsBoardService;
+    private final StringRedisTemplate redisTemplate;
 
     /**
      * 创建学霸天梯榜的表
@@ -52,15 +55,17 @@ public class PointsBoardPersistentHandler {
         // 2.计算动态表名
         // 2.1.查询赛季信息
         Integer season = seasonService.querySeasonByTime(time);
-        // 2.2.将表名存入ThreadLocal
+        // 2.2.存入ThreadLocal
         TableInfoContext.setInfo(POINTS_BOARD_TABLE_PREFIX + season);
 
         // 3.查询榜单数据
         // 3.1.拼接KEY
         String key = RedisConstants.POINTS_BOARD_KEY_PREFIX + time.format(DateUtils.POINTS_BOARD_SUFFIX_FORMATTER);
         // 3.2.查询数据
-        int pageNo = 1;
-        int pageSize = 1000;
+        int index = XxlJobHelper.getShardIndex();
+        int total = XxlJobHelper.getShardTotal();
+        int pageNo = index + 1; // 起始页，就是分片序号+1
+        int pageSize = 10;
         while (true) {
             List<PointsBoard> boardList = pointsBoardService.queryCurrentBoardList(key, pageNo, pageSize);
             if (CollUtils.isEmpty(boardList)) {
@@ -69,14 +74,24 @@ public class PointsBoardPersistentHandler {
             // 4.持久化到数据库
             // 4.1.把排名信息写入id
             boardList.forEach(b -> {
-                b.setId(b.getId().longValue());
+                b.setId(b.getId());
             });
             // 4.2.持久化
             pointsBoardService.saveBatch(boardList);
-            // 5.翻页
-            pageNo++;
+            // 5.翻页，跳过N个页，N就是分片数量
+            pageNo += total;
         }
-        // 任务结束，移除动态表名
+
         TableInfoContext.remove();
+    }
+
+    @XxlJob("clearPointsBoardFromRedis")
+    public void clearPointsBoardFromRedis() {
+        // 1.获取上月时间
+        LocalDateTime time = LocalDateTime.now().minusMonths(1);
+        // 2.计算key
+        String key = RedisConstants.POINTS_BOARD_KEY_PREFIX + time.format(DateUtils.POINTS_BOARD_SUFFIX_FORMATTER);
+        // 3.删除
+        redisTemplate.unlink(key);
     }
 }
