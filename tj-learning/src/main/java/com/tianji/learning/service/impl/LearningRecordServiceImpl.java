@@ -44,7 +44,6 @@ public class LearningRecordServiceImpl extends ServiceImpl<LearningRecordMapper,
      * @return
      */
     @Override
-    @Transactional
     public LearningLessonDTO queryLearningRecordByCourse(Long courseId) {
         // 1.获取用户id
         Long userId = UserContext.getUser();
@@ -69,6 +68,7 @@ public class LearningRecordServiceImpl extends ServiceImpl<LearningRecordMapper,
      * @param recordDTO
      */
     @Override
+    @Transactional
     public void addLearningRecord(LearningRecordFormDTO recordDTO) {
         // 1.获取用户id
         Long userId = UserContext.getUser();
